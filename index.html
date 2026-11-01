@@ -1,0 +1,454 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ทอยเต๋าวงเหล้า</title>
+<meta name="description" content="เกมทอยลูกเต๋า 2 ลูก สำหรับเล่นในวงเหล้า พร้อมกติกาดื่ม รายชื่อผู้เล่น และประวัติการทอย">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #14100c;
+    --bg-2: #1f1813;
+    --card: #2a211a;
+    --card-2: #332920;
+    --line: #4a3b2e;
+    --text: #f6ecdd;
+    --muted: #b9a893;
+    --amber: #f2a93b;
+    --amber-2: #ffc766;
+    --red: #e4573d;
+    --green: #6fc27a;
+    --die-bg: #fff8ea;
+    --die-pip: #1a120a;
+    --radius: 18px;
+    --shadow: 0 10px 30px rgba(0,0,0,.45);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: 'Kanit', system-ui, sans-serif;
+    background: radial-gradient(1200px 600px at 50% -10%, #3a2a1b 0%, var(--bg) 60%);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 16px 16px calc(24px + env(safe-area-inset-bottom));
+    -webkit-tap-highlight-color: transparent;
+  }
+  .wrap { max-width: 520px; margin: 0 auto; }
+  header { text-align: center; margin-bottom: 14px; }
+  h1 { font-size: 30px; font-weight: 900; margin: 0; letter-spacing: .5px; color: var(--amber-2); text-shadow: 0 2px 0 #7a4e10; }
+  header p { margin: 4px 0 0; color: var(--muted); font-size: 14px; }
+
+  .card {
+    background: linear-gradient(180deg, var(--card) 0%, var(--card-2) 100%);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 16px;
+    box-shadow: var(--shadow);
+    margin-bottom: 14px;
+  }
+  .card h2 { font-size: 16px; font-weight: 700; margin: 0 0 10px; color: var(--amber); display: flex; align-items: center; justify-content: space-between; }
+  .card h2 .hint { font-weight: 400; font-size: 12px; color: var(--muted); }
+
+  /* turn banner */
+  .turn { text-align: center; font-size: 15px; color: var(--muted); margin-bottom: 10px; min-height: 22px; }
+  .turn b { color: var(--text); font-size: 20px; }
+
+  /* dice */
+  .dice { display: flex; justify-content: center; gap: 26px; margin: 10px 0 18px; perspective: 600px; }
+  .die {
+    width: 110px; height: 110px;
+    background: var(--die-bg);
+    border-radius: 22px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    padding: 14px;
+    gap: 4px;
+    box-shadow: inset 0 -6px 0 #d8c8a8, 0 12px 24px rgba(0,0,0,.5);
+    transition: transform .15s;
+  }
+  .die span { border-radius: 50%; background: transparent; }
+  .die span.on { background: var(--die-pip); box-shadow: inset 0 2px 3px rgba(0,0,0,.5); }
+  .die.rolling { animation: tumble .12s linear infinite; }
+  @keyframes tumble {
+    0%   { transform: rotate(-12deg) translateY(-6px) scale(1.04); }
+    50%  { transform: rotate(10deg) translateY(4px) scale(.98); }
+    100% { transform: rotate(-8deg) translateY(-3px) scale(1.02); }
+  }
+  .die.land { animation: land .35s ease-out; }
+  @keyframes land {
+    0% { transform: scale(1.25) rotate(8deg); }
+    60% { transform: scale(.94) rotate(-3deg); }
+    100% { transform: scale(1) rotate(0); }
+  }
+
+  .total { text-align: center; font-size: 15px; color: var(--muted); margin-bottom: 8px; }
+  .total b { font-size: 34px; color: var(--amber-2); display: block; line-height: 1.1; }
+
+  .result {
+    text-align: center;
+    background: #1a120c;
+    border: 1px dashed var(--line);
+    border-radius: 14px;
+    padding: 12px;
+    min-height: 68px;
+    font-size: 17px;
+    line-height: 1.4;
+  }
+  .result .big { font-size: 22px; font-weight: 700; color: var(--amber-2); }
+  .result.hot { border-color: var(--red); background: #2b140f; }
+  .result.hot .big { color: #ff8a6e; }
+  .result.safe .big { color: var(--green); }
+
+  button {
+    font-family: inherit;
+    border: 0;
+    cursor: pointer;
+    font-weight: 700;
+  }
+  .roll {
+    width: 100%;
+    margin-top: 14px;
+    padding: 18px;
+    font-size: 24px;
+    border-radius: 16px;
+    color: #2a1600;
+    background: linear-gradient(180deg, var(--amber-2), var(--amber));
+    box-shadow: 0 6px 0 #a3661a, 0 12px 24px rgba(0,0,0,.4);
+    transition: transform .08s, box-shadow .08s;
+  }
+  .roll:active { transform: translateY(5px); box-shadow: 0 1px 0 #a3661a; }
+  .roll:disabled { opacity: .6; transform: none; }
+
+  /* players */
+  .addrow { display: flex; gap: 8px; margin-bottom: 10px; }
+  .addrow input {
+    flex: 1; min-width: 0;
+    font-family: inherit; font-size: 16px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    background: #1a120c; color: var(--text);
+  }
+  .addrow input:focus { outline: 2px solid var(--amber); border-color: transparent; }
+  .btn { padding: 12px 16px; border-radius: 12px; background: var(--amber); color: #2a1600; font-size: 16px; }
+  .btn.ghost { background: transparent; color: var(--muted); border: 1px solid var(--line); font-weight: 500; font-size: 14px; padding: 8px 12px; }
+  .players { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
+  .players li {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: #1a120c;
+    border: 1px solid transparent;
+  }
+  .players li.active { border-color: var(--amber); background: #2b1f10; }
+  .players li .name { flex: 1; font-size: 16px; }
+  .players li .drinks { color: var(--muted); font-size: 13px; white-space: nowrap; }
+  .players li .drinks b { color: #ff8a6e; font-size: 16px; }
+  .players li .x { background: transparent; color: var(--muted); font-size: 18px; padding: 0 6px; }
+  .empty { color: var(--muted); font-size: 14px; text-align: center; padding: 6px; }
+
+  /* rules */
+  .rules { margin: 0; padding: 0; list-style: none; font-size: 14px; }
+  .rules li { display: flex; gap: 10px; padding: 7px 0; border-bottom: 1px solid #3b2e22; }
+  .rules li:last-child { border-bottom: 0; }
+  .rules .k { min-width: 64px; font-weight: 700; color: var(--amber-2); }
+  details summary { cursor: pointer; list-style: none; }
+  details summary::-webkit-details-marker { display: none; }
+  details[open] summary .hint::after { content: ' ▲'; }
+  details summary .hint::after { content: ' ▼'; }
+
+  /* history */
+  .log { margin: 0; padding: 0; list-style: none; font-size: 14px; max-height: 220px; overflow: auto; }
+  .log li { display: flex; gap: 8px; padding: 6px 0; border-bottom: 1px solid #3b2e22; color: var(--muted); }
+  .log li .who { color: var(--text); font-weight: 500; min-width: 70px; }
+  .log li .d { color: var(--amber-2); font-weight: 700; min-width: 54px; }
+  .row { display: flex; gap: 8px; }
+  .row .btn { flex: 1; }
+  footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 18px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>🎲 ทอยเต๋าวงเหล้า</h1>
+    <p>ลูกเต๋า 2 ลูก แต้ม 1–6 ใครแต้มไหน ดื่มตามกติกา</p>
+  </header>
+
+  <section class="card">
+    <div class="turn" id="turn">กดปุ่มทอยได้เลย</div>
+    <div class="dice">
+      <div class="die" id="d1" aria-label="ลูกเต๋า 1"></div>
+      <div class="die" id="d2" aria-label="ลูกเต๋า 2"></div>
+    </div>
+    <div class="total">รวม <b id="total">–</b></div>
+    <div class="result" id="result">ยังไม่ได้ทอย</div>
+    <button class="roll" id="rollBtn">🎲 ทอยเต๋า!</button>
+  </section>
+
+  <section class="card">
+    <h2>ผู้เล่น <span class="hint">แตะชื่อเพื่อเลือกคนทอย</span></h2>
+    <div class="addrow">
+      <input id="nameInput" type="text" placeholder="ใส่ชื่อเพื่อน แล้วกดเพิ่ม" maxlength="20" autocomplete="off">
+      <button class="btn" id="addBtn">เพิ่ม</button>
+    </div>
+    <ul class="players" id="players"></ul>
+    <div class="empty" id="noPlayers">ยังไม่มีผู้เล่น (ทอยได้โดยไม่ต้องใส่ชื่อก็ได้)</div>
+  </section>
+
+  <section class="card">
+    <details>
+      <summary><h2>กติกาดื่ม <span class="hint">ดู</span></h2></summary>
+      <ul class="rules">
+        <li><span class="k">🔥 1–1</span><span>งูตาเดียว! คนทอยดื่มหมดแก้ว</span></li>
+        <li><span class="k">👑 6–6</span><span>คู่หก! คนทอยสั่งให้ทุกคนในวงดื่ม</span></li>
+        <li><span class="k">👯 คู่อื่น</span><span>ออกคู่ (2-2, 3-3, 4-4, 5-5) ทุกคนดื่มคนละ 1 อึก</span></li>
+        <li><span class="k">🎯 รวม 7</span><span>เลขนำโชค! คนทอยเลือกเพื่อน 1 คนให้ดื่ม 2 อึก</span></li>
+        <li><span class="k">⬇️ รวม 3–4</span><span>แต้มต่ำ คนทอยดื่ม 2 อึก</span></li>
+        <li><span class="k">↔️ รวม 5–6</span><span>คนทางซ้ายดื่ม 1 อึก</span></li>
+        <li><span class="k">↔️ รวม 8–9</span><span>คนทางขวาดื่ม 1 อึก</span></li>
+        <li><span class="k">✨ รวม 10–11</span><span>แต้มสูง คนทอยรอด ส่งเต๋าต่อ</span></li>
+      </ul>
+    </details>
+  </section>
+
+  <section class="card">
+    <h2>ประวัติการทอย <span class="hint" id="count">0 ครั้ง</span></h2>
+    <ul class="log" id="log"></ul>
+    <div class="empty" id="noLog">ยังไม่มีประวัติ</div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn ghost" id="clearLog">ล้างประวัติ</button>
+      <button class="btn ghost" id="resetAll">เริ่มเกมใหม่</button>
+    </div>
+  </section>
+
+  <footer>ดื่มอย่างรับผิดชอบ เมาไม่ขับ 🍻</footer>
+</div>
+
+<script>
+(function () {
+  // pips layout index 0..8 in a 3x3 grid
+  const PIPS = {
+    1: [4],
+    2: [0, 8],
+    3: [0, 4, 8],
+    4: [0, 2, 6, 8],
+    5: [0, 2, 4, 6, 8],
+    6: [0, 2, 3, 5, 6, 8],
+  };
+
+  const $ = (id) => document.getElementById(id);
+  const d1 = $('d1'), d2 = $('d2');
+  const totalEl = $('total'), resultEl = $('result'), turnEl = $('turn');
+  const rollBtn = $('rollBtn');
+  const playersEl = $('players'), noPlayers = $('noPlayers');
+  const nameInput = $('nameInput'), addBtn = $('addBtn');
+  const logEl = $('log'), noLog = $('noLog'), countEl = $('count');
+
+  let state = { players: [], turn: 0, log: [] };
+  let rolling = false;
+
+  // ---------- persistence (per-device convenience only) ----------
+  function save() {
+    try { localStorage.setItem('toytao2', JSON.stringify(state)); } catch (e) {}
+  }
+  function load() {
+    try {
+      const raw = localStorage.getItem('toytao2');
+      if (raw) {
+        const s = JSON.parse(raw);
+        if (s && Array.isArray(s.players)) state = { players: s.players, turn: s.turn | 0, log: Array.isArray(s.log) ? s.log : [] };
+      }
+    } catch (e) {}
+  }
+
+  // ---------- dice ----------
+  function drawDie(el, n) {
+    el.innerHTML = '';
+    for (let i = 0; i < 9; i++) {
+      const s = document.createElement('span');
+      if (PIPS[n].includes(i)) s.className = 'on';
+      el.appendChild(s);
+    }
+  }
+  function rand6() {
+    if (window.crypto && crypto.getRandomValues) {
+      const a = new Uint32Array(1);
+      crypto.getRandomValues(a);
+      return (a[0] % 6) + 1;
+    }
+    return Math.floor(Math.random() * 6) + 1;
+  }
+
+  // ---------- rules ----------
+  function neighbor(offset) {
+    const n = state.players.length;
+    if (n < 2) return null;
+    return state.players[(state.turn + offset + n) % n].name;
+  }
+  function judge(a, b, who) {
+    const sum = a + b;
+    const me = who || 'คนทอย';
+    // returns {title, text, tone, drinkers: [names]} drinkers used for tally
+    if (a === 1 && b === 1) return { title: '🔥 งูตาเดียว!', text: `${me} ดื่มหมดแก้ว`, tone: 'hot', drinkers: who ? [who] : [], sips: 3 };
+    if (a === 6 && b === 6) return { title: '👑 คู่หก!', text: `${me} สั่งให้ทุกคนในวงดื่ม`, tone: 'safe', drinkers: state.players.filter(p => p.name !== who).map(p => p.name), sips: 1 };
+    if (a === b) return { title: `👯 ออกคู่ ${a}-${b}`, text: 'ทุกคนดื่มคนละ 1 อึก', tone: 'hot', drinkers: state.players.map(p => p.name), sips: 1 };
+    if (sum === 7) return { title: '🎯 รวม 7 เลขนำโชค', text: `${me} เลือกเพื่อน 1 คนให้ดื่ม 2 อึก`, tone: 'safe', drinkers: [], sips: 0 };
+    if (sum <= 4) return { title: `⬇️ รวม ${sum} แต้มต่ำ`, text: `${me} ดื่ม 2 อึก`, tone: 'hot', drinkers: who ? [who] : [], sips: 2 };
+    if (sum <= 6) {
+      const l = neighbor(-1);
+      return { title: `↔️ รวม ${sum}`, text: `คนทางซ้าย${l ? ' (' + l + ')' : ''} ดื่ม 1 อึก`, tone: '', drinkers: l ? [l] : [], sips: 1 };
+    }
+    if (sum <= 9) {
+      const r = neighbor(1);
+      return { title: `↔️ รวม ${sum}`, text: `คนทางขวา${r ? ' (' + r + ')' : ''} ดื่ม 1 อึก`, tone: '', drinkers: r ? [r] : [], sips: 1 };
+    }
+    return { title: `✨ รวม ${sum} แต้มสูง`, text: `${me} รอด ส่งเต๋าต่อ`, tone: 'safe', drinkers: [], sips: 0 };
+  }
+
+  // ---------- render ----------
+  function renderTurn() {
+    if (!state.players.length) { turnEl.textContent = 'กดปุ่มทอยได้เลย'; return; }
+    state.turn = state.turn % state.players.length;
+    turnEl.innerHTML = 'ตาของ <b></b>';
+    turnEl.querySelector('b').textContent = state.players[state.turn].name;
+  }
+  function renderPlayers() {
+    playersEl.innerHTML = '';
+    noPlayers.style.display = state.players.length ? 'none' : 'block';
+    state.players.forEach((p, i) => {
+      const li = document.createElement('li');
+      if (i === state.turn) li.className = 'active';
+      const name = document.createElement('span');
+      name.className = 'name';
+      name.textContent = (i === state.turn ? '🎲 ' : '') + p.name;
+      const drinks = document.createElement('span');
+      drinks.className = 'drinks';
+      drinks.innerHTML = 'ดื่มไป <b></b> อึก';
+      drinks.querySelector('b').textContent = p.drinks || 0;
+      const x = document.createElement('button');
+      x.className = 'x'; x.textContent = '✕'; x.title = 'ลบ';
+      x.addEventListener('click', (e) => { e.stopPropagation(); removePlayer(i); });
+      li.append(name, drinks, x);
+      li.addEventListener('click', () => { if (!rolling) { state.turn = i; save(); renderTurn(); renderPlayers(); } });
+      playersEl.appendChild(li);
+    });
+    renderTurn();
+  }
+  function renderLog() {
+    logEl.innerHTML = '';
+    noLog.style.display = state.log.length ? 'none' : 'block';
+    countEl.textContent = state.log.length + ' ครั้ง';
+    state.log.slice().reverse().forEach((e) => {
+      const li = document.createElement('li');
+      const who = document.createElement('span'); who.className = 'who'; who.textContent = e.who || 'ไม่ระบุ';
+      const d = document.createElement('span'); d.className = 'd'; d.textContent = `${e.a}+${e.b}=${e.a + e.b}`;
+      const t = document.createElement('span'); t.textContent = e.title;
+      li.append(who, d, t);
+      logEl.appendChild(li);
+    });
+  }
+  function showResult(r) {
+    resultEl.className = 'result ' + r.tone;
+    resultEl.innerHTML = '<div class="big"></div><div></div>';
+    resultEl.children[0].textContent = r.title;
+    resultEl.children[1].textContent = r.text;
+  }
+
+  // ---------- players ----------
+  function addPlayer() {
+    const n = nameInput.value.trim();
+    if (!n) { nameInput.focus(); return; }
+    if (state.players.length >= 20) return;
+    state.players.push({ name: n, drinks: 0 });
+    nameInput.value = '';
+    save(); renderPlayers();
+    nameInput.focus();
+  }
+  function removePlayer(i) {
+    state.players.splice(i, 1);
+    if (state.turn >= state.players.length) state.turn = 0;
+    save(); renderPlayers();
+  }
+
+  // ---------- roll ----------
+  function roll() {
+    if (rolling) return;
+    rolling = true;
+    rollBtn.disabled = true;
+    d1.classList.add('rolling'); d2.classList.add('rolling');
+    resultEl.className = 'result';
+    resultEl.textContent = 'กำลังทอย…';
+    totalEl.textContent = '…';
+
+    const ticks = 12;
+    let i = 0;
+    const iv = setInterval(() => {
+      drawDie(d1, rand6()); drawDie(d2, rand6());
+      if (++i >= ticks) {
+        clearInterval(iv);
+        finish();
+      }
+    }, 70);
+
+    function finish() {
+      const a = rand6(), b = rand6();
+      d1.classList.remove('rolling'); d2.classList.remove('rolling');
+      drawDie(d1, a); drawDie(d2, b);
+      d1.classList.add('land'); d2.classList.add('land');
+      setTimeout(() => { d1.classList.remove('land'); d2.classList.remove('land'); }, 400);
+
+      const who = state.players.length ? state.players[state.turn].name : '';
+      const r = judge(a, b, who);
+      totalEl.textContent = a + b;
+      showResult(r);
+
+      // tally drinks
+      if (r.sips > 0) {
+        r.drinkers.forEach((name) => {
+          const p = state.players.find((p) => p.name === name);
+          if (p) p.drinks = (p.drinks || 0) + r.sips;
+        });
+      }
+      state.log.push({ who, a, b, title: r.title });
+      if (state.log.length > 100) state.log.shift();
+
+      if (navigator.vibrate) { try { navigator.vibrate(r.tone === 'hot' ? [60, 40, 60] : 40); } catch (e) {} }
+
+      // next turn
+      if (state.players.length) state.turn = (state.turn + 1) % state.players.length;
+      save();
+      renderPlayers(); renderLog();
+      rolling = false;
+      rollBtn.disabled = false;
+    }
+  }
+
+  // ---------- events ----------
+  rollBtn.addEventListener('click', roll);
+  addBtn.addEventListener('click', addPlayer);
+  nameInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') addPlayer(); });
+  $('clearLog').addEventListener('click', () => { state.log = []; save(); renderLog(); });
+  $('resetAll').addEventListener('click', () => {
+    if (!confirm('เริ่มเกมใหม่? จะล้างผู้เล่น คะแนนดื่ม และประวัติทั้งหมด')) return;
+    state = { players: [], turn: 0, log: [] };
+    save();
+    drawDie(d1, 1); drawDie(d2, 1);
+    totalEl.textContent = '–';
+    resultEl.className = 'result'; resultEl.textContent = 'ยังไม่ได้ทอย';
+    renderPlayers(); renderLog();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.code === 'Space' && document.activeElement !== nameInput) { e.preventDefault(); roll(); }
+  });
+
+  // ---------- init ----------
+  load();
+  drawDie(d1, 1); drawDie(d2, 6);
+  renderPlayers(); renderLog();
+})();
+</script>
+</body>
+</html>
