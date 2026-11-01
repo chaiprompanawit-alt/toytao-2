@@ -57,6 +57,8 @@
 
   .turn { text-align: center; font-size: 15px; color: var(--muted); margin-bottom: 10px; min-height: 26px; }
   .turn b { color: var(--text); font-size: 22px; }
+  .turn .sides { display: flex; justify-content: center; gap: 18px; font-size: 13px; margin-top: 2px; }
+  .turn .sides em { font-style: normal; color: var(--amber-2); font-weight: 500; }
 
   /* ---------- felt table + 3D dice ---------- */
   .table {
@@ -255,7 +257,7 @@
   </section>
 
   <section class="card">
-    <h2>ผู้เล่น <span class="hint">แตะชื่อเพื่อเลือกคนทอย</span></h2>
+    <h2>ผู้เล่น <span class="hint">เรียงตามที่นั่ง · แตะชื่อเพื่อเลือกคนทอย</span></h2>
     <div class="addrow">
       <input id="nameInput" type="text" placeholder="เพิ่มชื่อเพื่อน" maxlength="20" autocomplete="off">
       <button class="btn" id="addBtn">เพิ่ม</button>
@@ -279,8 +281,9 @@
 
 <script>
 (function () {
-  const VERSION = 2;
-  const DEFAULT_PLAYERS = ['มี่', 'แรม', 'แอม', 'วิว', 'โอเว่น', 'น็อต'];
+  const VERSION = 3;
+  // เรียงตามที่นั่งจริง: ถัดไปในรายการ = คนทางขวา, ก่อนหน้า = คนทางซ้าย
+  const DEFAULT_PLAYERS = ['มี่', 'น็อต', 'โอเว่น', 'วิว', 'แอม', 'แรม'];
   const PIPS = { 1: [4], 2: [0, 8], 3: [0, 4, 8], 4: [0, 2, 6, 8], 5: [0, 2, 4, 6, 8], 6: [0, 2, 3, 5, 6, 8] };
   // rotation that brings face n to the front
   const FACE_ROT = { 1: [0, 0], 2: [-90, 0], 3: [0, -90], 4: [0, 90], 5: [90, 0], 6: [0, 180] };
@@ -374,8 +377,11 @@
   function renderTurn() {
     if (!state.players.length) { turnEl.textContent = 'กดปุ่มทอยได้เลย'; return; }
     state.turn = state.turn % state.players.length;
-    turnEl.innerHTML = 'ตาของ <b></b>';
+    turnEl.innerHTML = 'ตาของ <b></b><div class="sides"><span>👈 ซ้าย <em></em></span><span>ขวา <em></em> 👉</span></div>';
     turnEl.querySelector('b').textContent = state.players[state.turn].name;
+    const ems = turnEl.querySelectorAll('em');
+    ems[0].textContent = neighbor(-1) || '–';
+    ems[1].textContent = neighbor(1) || '–';
   }
   function renderPlayers() {
     playersEl.innerHTML = '';
